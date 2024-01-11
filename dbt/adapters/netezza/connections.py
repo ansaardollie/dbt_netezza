@@ -1,20 +1,21 @@
+import inspect
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Optional, Tuple, Any
-import time
-import inspect
+from typing import Any, Optional, Tuple
 
 import agate
-from dbt.clients import agate_helper
-from dbt.exceptions import DbtRuntimeError, DbtDatabaseError
+import pyodbc
+
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager as connection_cls
+from dbt.clients import agate_helper
+from dbt.contracts.connection import AdapterResponse, Connection
 from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
-from dbt.contracts.connection import Connection, AdapterResponse
+from dbt.exceptions import DbtDatabaseError, DbtRuntimeError
 from dbt.helper_types import Port
-import pyodbc
 
 logger = AdapterLogger("Netezza")
 
@@ -230,7 +231,11 @@ class NetezzaConnectionManager(connection_cls):
     # Override to support multiple queries
     # Source: https://github.com/microsoft/dbt-fabric/blob/main/dbt/adapters/fabric/fabric_connection_manager.py
     def execute(
-        self, sql: str, auto_begin: bool = True, fetch: bool = False
+        self,
+        sql: str,
+        auto_begin: bool = False,
+        fetch: bool = False,
+        limit: Optional[int] = None,
     ) -> Tuple[AdapterResponse, agate.Table]:
         sql = self._add_query_comment(sql)
         _, cursor = self.add_query(sql, auto_begin)
@@ -240,7 +245,7 @@ class NetezzaConnectionManager(connection_cls):
             while cursor.description is None:
                 if not cursor.nextset():
                     break
-            table = self.get_result_from_cursor(cursor)
+            table = self.get_result_from_cursor(cursor, limit=limit)
         else:
             table = agate_helper.empty_table()
         # Step through all result sets so we process all errors
