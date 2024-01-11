@@ -2,13 +2,13 @@
 # instances without schemas enabled
 # Source: https://docs.getdbt.com/docs/contributing/testing-a-new-adapter
 import os
-import pytest
 import warnings
 from argparse import Namespace
 
-from dbt.events.functions import setup_event_logger, cleanup_event_logger
+import pytest
+from dbt.events.functions import cleanup_event_logger, setup_event_logger
 from dbt.tests.fixtures.project import TestProjInfo
-from dbt.tests.util import run_sql_with_adapter, relation_from_name, get_manifest
+from dbt.tests.util import get_manifest, relation_from_name, run_sql_with_adapter
 
 
 @pytest.fixture(scope="class")
@@ -54,6 +54,13 @@ def project_cleanup(
         get_manifest_relations(project_root) if project_cleanup_use_manifest else []
     )
     relations = manifest_relations + project_cleanup_extra_relations
+    drop_statements = [
+        f"drop {relation_type} {relation_from_name(adapter, relation)}"
+        for relation_type, relation in relations
+    ]
+    sql = ";\n".join(drop_statements)
+    run_sql_with_adapter(adapter, sql)
+
     if len(relations):
         drop_statements = [
             f"drop {relation_type} {relation_from_name(adapter, relation)}"
