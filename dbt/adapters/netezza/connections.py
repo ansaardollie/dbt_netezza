@@ -233,7 +233,7 @@ class NetezzaConnectionManager(connection_cls):
     def execute(
         self,
         sql: str,
-        auto_begin: bool = False,
+        auto_begin: bool = True,
         fetch: bool = False,
         limit: Optional[int] = None,
     ) -> Tuple[AdapterResponse, agate.Table]:

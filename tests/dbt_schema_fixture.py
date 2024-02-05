@@ -54,13 +54,6 @@ def project_cleanup(
         get_manifest_relations(project_root) if project_cleanup_use_manifest else []
     )
     relations = manifest_relations + project_cleanup_extra_relations
-    drop_statements = [
-        f"drop {relation_type} {relation_from_name(adapter, relation)}"
-        for relation_type, relation in relations
-    ]
-    sql = ";\n".join(drop_statements)
-    run_sql_with_adapter(adapter, sql)
-
     if len(relations):
         drop_statements = [
             f"drop {relation_type} {relation_from_name(adapter, relation)}"
