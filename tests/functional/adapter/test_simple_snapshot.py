@@ -48,8 +48,6 @@ class NetezzaSimpleSnapshotBase(BaseSimpleSnapshotBase):
 
 
 class TestSnapshotNetezza(NetezzaSimpleSnapshotBase, BaseSimpleSnapshot):
-    # FIXME Refactor test to not add column or investigate transaction
-    @pytest.mark.skip("Netezza does not support adding a column in a transaction block")
     def test_new_column_captured_by_snapshot(self, project):
         pass
 

@@ -146,6 +146,14 @@ class NetezzaConnectionManager(connection_cls):
         """
         connection.handle.close()
 
+    # Override transaction SQL because autocommit is enabled for connection
+    # Source https://github.com/microsoft/dbt-fabric/blob/main/dbt/adapters/fabric/fabric_connection_manager.py
+    def add_begin_query(self):
+        pass
+
+    def add_commit_query(self):
+        pass
+
     @classmethod
     def get_credentials(cls, credentials):
         return credentials
@@ -220,9 +228,9 @@ class NetezzaConnectionManager(connection_cls):
         return name_map[type_code.__name__]
 
     # Override to support multiple queries
-    # Source: https://github.com/dbt-msft/dbt-sqlserver/blob/master/dbt/adapters/sqlserver/sql_server_connection_manager.py
+    # Source: https://github.com/microsoft/dbt-fabric/blob/main/dbt/adapters/fabric/fabric_connection_manager.py
     def execute(
-        self, sql: str, auto_begin: bool = False, fetch: bool = False
+        self, sql: str, auto_begin: bool = True, fetch: bool = False
     ) -> Tuple[AdapterResponse, agate.Table]:
         sql = self._add_query_comment(sql)
         _, cursor = self.add_query(sql, auto_begin)

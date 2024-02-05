@@ -125,6 +125,31 @@
   {{ return(sql_convert_columns_in_relation(table)) }}
 {% endmacro %}
 
+-- Override to use separate statements for add & drop columns and use Netezza syntax
+{% macro netezza__alter_relation_add_remove_columns(relation, add_columns, remove_columns) %}
+  {% if add_columns is none %}
+    {% set add_columns = [] %}
+  {% endif %}
+  {% if remove_columns is none %}
+    {% set remove_columns = [] %}
+  {% endif %}
+  {% set sql -%}
+    {% for column in add_columns %}
+      {% if loop.first %}
+        alter {{ relation.type }} {{ relation }} add column
+      {% endif %}
+      {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
+    {% endfor %}{{ ';' if add_columns and remove_columns }}
+    {% for column in remove_columns %}
+      {% if loop.first %}
+        alter {{ relation.type }} {{ relation }} drop column
+      {% endif %}
+        {{ column.name }}{{ ',' if not loop.last else ' cascade' }}
+    {% endfor %}
+  {%- endset -%}
+  {% do run_query(sql) %}
+{% endmacro %}
+
 {% macro netezza__alter_relation_comment(relation, comment) %}
   {% set escaped_comment = netezza_escape_comment(comment) %}
   comment on {{ relation.type }} {{ relation }} is {{ escaped_comment }};

@@ -28,7 +28,6 @@ from dbt.tests.adapter.basic.test_docs_generate import (
     models__model_sql,
     ref_models__schema_yml,
     ref_sources__schema_yml,
-    ref_models__view_summary_sql,
     ref_models__ephemeral_summary_sql,
     ref_models__ephemeral_copy_sql,
     ref_models__docs_md,
@@ -171,6 +170,14 @@ class NetezzaGenerateProject(BaseGenerateProject):
         def __eq__(self, other):
             return other.startswith("CHARACTER VARYING")
 
+    @pytest.fixture(scope="class", autouse=True)
+    def project_cleanup_extra_relations(self):
+        return [("view", "second_model"), ("view", "model"), ("table", "seed")]
+
+    @pytest.fixture(scope="class", autouse=True)
+    def project_cleanup_use_manifest(self):
+        return False
+
     # Override to remove test schema creation
     @pytest.fixture(scope="class", autouse=True)
     def setup(self, project):
@@ -228,7 +235,7 @@ class TestDocsGenerateNetezza(NetezzaGenerateProject, BaseDocsGenerate):
             table_type="TABLE",
             model_stats=no_stats(),
             case=str.upper,
-            case_columns=str.upper,
+            case_columns=True,
         )
         expected["nodes"]["model.test.second_model"]["metadata"][
             "schema"
@@ -261,7 +268,7 @@ class TestDocsGenReferencesNetezza(NetezzaGenerateProject, BaseDocsGenReferences
 
     @pytest.fixture(scope="class")
     def expected_catalog(self, project, profile_user):
-        return expected_references_catalog(
+        expected = expected_references_catalog(
             project,
             role=profile_user.upper(),
             id_type="INTEGER",
@@ -272,8 +279,20 @@ class TestDocsGenReferencesNetezza(NetezzaGenerateProject, BaseDocsGenReferences
             table_type="TABLE",
             model_stats=no_stats(),
             case=str.upper,
-            case_columns=str.upper,
+            case_columns=True,
         )
+
+        # Uppercase columns keys and names because expected_references_catalog does not use 
+        # col_case consistently like base_expected_catalog
+        for category in ["nodes", "sources"]:
+            for relation in expected[category]:
+                columns = {}
+                for column_name in expected[category][relation]["columns"]:
+                    column = expected[category][relation]["columns"][column_name]
+                    column["name"] = column["name"].upper()
+                    columns[column_name.upper()] = column
+                expected[category][relation]["columns"] = columns
+        return expected
 
     def test_references(self, project, expected_catalog):
         start_time = run_and_generate(project)
