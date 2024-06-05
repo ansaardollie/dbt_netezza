@@ -1,23 +1,40 @@
 from pathlib import Path
 
 import pytest
-from dbt.tests.util import copy_file
+from dbt.tests.adapter.simple_seed.seeds import seeds__expected_sql
 from dbt.tests.adapter.simple_seed.test_seed import (
-    SeedTestBase,
+    BaseTestEmptySeed,
     SeedConfigBase,
+    SeedTestBase,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestBasicSeedTests as BaseBasicSeedTests,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSeedConfigFullRefreshOff as BaseSeedConfigFullRefreshOff,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSeedConfigFullRefreshOn as BaseSeedConfigFullRefreshOn,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSeedCustomSchema as BaseSeedCustomSchema,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSeedParsing as BaseSeedParsing,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSeedSpecificFormats as BaseSeedSpecificFormats,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSimpleSeedEnabledViaConfig as BaseSimpleSeedEnabledViaConfig,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSimpleSeedWithBOM as BaseSimpleSeedWithBOM,
 )
-from dbt.tests.adapter.simple_seed.seeds import seeds__expected_sql
 from dbt.tests.adapter.simple_seed.test_seed_type_override import (
     BaseSimpleSeedColumnOverride,
 )
+from dbt.tests.util import copy_file
 
 
 def _get_expected_sql():
@@ -112,3 +129,7 @@ class TestSimpleSeedColumnOverrideNetezza(BaseSimpleSeedColumnOverride):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"seeds": {"boolstyle": "TRUE_FALSE", "datetimedelim": " "}}
+
+
+class TestEmptySeedNetezza(BaseTestEmptySeed):
+    pass

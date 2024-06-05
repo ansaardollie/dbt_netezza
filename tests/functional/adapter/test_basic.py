@@ -1,54 +1,51 @@
 import os
 
 import pytest
-
-from dbt.tests.adapter.basic.test_base import BaseSimpleMaterializations
-from dbt.tests.adapter.basic.test_table_materialization import BaseTableMaterialization
-from dbt.tests.adapter.basic.test_singular_tests import BaseSingularTests
-from dbt.tests.adapter.basic.test_singular_tests_ephemeral import (
-    BaseSingularTestsEphemeral,
-)
-from dbt.tests.adapter.basic.test_empty import BaseEmpty
-from dbt.tests.adapter.basic.test_ephemeral import BaseEphemeral
-from dbt.tests.adapter.basic.test_incremental import (
-    BaseIncremental,
-    BaseIncrementalNotSchemaChange,
-)
-from dbt.tests.adapter.basic.test_generic_tests import BaseGenericTests
-from dbt.tests.adapter.basic.test_snapshot_check_cols import BaseSnapshotCheckCols
-from dbt.tests.adapter.basic.test_snapshot_timestamp import BaseSnapshotTimestamp
-from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
-from dbt.tests.adapter.basic.test_docs_generate import (
-    BaseDocsGenerate,
-    BaseDocsGenReferences,
-    BaseGenerateProject,
-    write_project_files,
-    models__schema_yml,
-    models__readme_md,
-    models__model_sql,
-    ref_models__schema_yml,
-    ref_sources__schema_yml,
-    ref_models__ephemeral_summary_sql,
-    ref_models__ephemeral_copy_sql,
-    ref_models__docs_md,
-    run_and_generate,
-    verify_catalog,
-)
 from dbt.tests.adapter.basic.expected_catalog import (
     base_expected_catalog,
     expected_references_catalog,
     no_stats,
 )
-from dbt.tests.adapter.basic.test_validate_connection import BaseValidateConnection
-
-
-from dbt.tests.util import (
-    run_dbt,
-    check_relations_equal,
-    relation_from_name,
-)
 from dbt.tests.adapter.basic.files import (
     schema_base_yml,
+)
+from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
+from dbt.tests.adapter.basic.test_base import BaseSimpleMaterializations
+from dbt.tests.adapter.basic.test_docs_generate import (
+    BaseDocsGenerate,
+    BaseDocsGenReferences,
+    BaseGenerateProject,
+    models__model_sql,
+    models__readme_md,
+    models__schema_yml,
+    ref_models__docs_md,
+    ref_models__ephemeral_copy_sql,
+    ref_models__ephemeral_summary_sql,
+    ref_models__schema_yml,
+    ref_sources__schema_yml,
+    run_and_generate,
+    verify_catalog,
+    write_project_files,
+)
+from dbt.tests.adapter.basic.test_empty import BaseEmpty
+from dbt.tests.adapter.basic.test_ephemeral import BaseEphemeral
+from dbt.tests.adapter.basic.test_generic_tests import BaseGenericTests
+from dbt.tests.adapter.basic.test_incremental import (
+    BaseIncremental,
+    BaseIncrementalNotSchemaChange,
+)
+from dbt.tests.adapter.basic.test_singular_tests import BaseSingularTests
+from dbt.tests.adapter.basic.test_singular_tests_ephemeral import (
+    BaseSingularTestsEphemeral,
+)
+from dbt.tests.adapter.basic.test_snapshot_check_cols import BaseSnapshotCheckCols
+from dbt.tests.adapter.basic.test_snapshot_timestamp import BaseSnapshotTimestamp
+from dbt.tests.adapter.basic.test_table_materialization import BaseTableMaterialization
+from dbt.tests.adapter.basic.test_validate_connection import BaseValidateConnection
+from dbt.tests.util import (
+    check_relations_equal,
+    relation_from_name,
+    run_dbt,
 )
 
 
@@ -159,7 +156,7 @@ class TestSnapshotTimestampNetezza(NetezzaSnapshotSeedConfig, BaseSnapshotTimest
     pass
 
 
-class TestBaseAdapterMethodNetezza(BaseAdapterMethod):
+class TestCachingNetezza(BaseAdapterMethod):
     def test_adapter_methods(self, project, equal_tables):
         with pytest.raises(RuntimeError, match="does not support"):
             super().test_adapter_methods(project, equal_tables)
@@ -237,9 +234,9 @@ class TestDocsGenerateNetezza(NetezzaGenerateProject, BaseDocsGenerate):
             case=str.upper,
             case_columns=True,
         )
-        expected["nodes"]["model.test.second_model"]["metadata"][
-            "schema"
-        ] = unique_schema
+        expected["nodes"]["model.test.second_model"]["metadata"]["schema"] = (
+            unique_schema
+        )
         return expected
 
 
@@ -282,7 +279,7 @@ class TestDocsGenReferencesNetezza(NetezzaGenerateProject, BaseDocsGenReferences
             case_columns=True,
         )
 
-        # Uppercase columns keys and names because expected_references_catalog does not use 
+        # Uppercase columns keys and names because expected_references_catalog does not use
         # col_case consistently like base_expected_catalog
         for category in ["nodes", "sources"]:
             for relation in expected[category]:

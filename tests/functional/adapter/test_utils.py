@@ -6,9 +6,11 @@ from dbt.tests.adapter.utils.test_array_construct import BaseArrayConstruct
 from dbt.tests.adapter.utils.test_bool_or import BaseBoolOr
 from dbt.tests.adapter.utils.test_cast_bool_to_text import BaseCastBoolToText
 from dbt.tests.adapter.utils.test_concat import BaseConcat
+from dbt.tests.adapter.utils.test_current_timestamp import BaseCurrentTimestampNaive
+from dbt.tests.adapter.utils.test_date_trunc import BaseDateTrunc
 from dbt.tests.adapter.utils.test_dateadd import BaseDateAdd
 from dbt.tests.adapter.utils.test_datediff import BaseDateDiff
-from dbt.tests.adapter.utils.test_date_trunc import BaseDateTrunc
+from dbt.tests.adapter.utils.test_equals import BaseEquals
 from dbt.tests.adapter.utils.test_escape_single_quotes import (
     BaseEscapeSingleQuotesQuote,
 )
@@ -19,8 +21,12 @@ from dbt.tests.adapter.utils.test_last_day import BaseLastDay
 from dbt.tests.adapter.utils.test_length import BaseLength
 from dbt.tests.adapter.utils.test_listagg import (
     BaseListagg,
-    seeds__data_listagg_csv,
     models__test_listagg_yml,
+    seeds__data_listagg_csv,
+)
+from dbt.tests.adapter.utils.test_null_compare import (
+    BaseMixedNullCompare,
+    BaseNullCompare,
 )
 from dbt.tests.adapter.utils.test_position import BasePosition
 from dbt.tests.adapter.utils.test_replace import BaseReplace
@@ -28,9 +34,9 @@ from dbt.tests.adapter.utils.test_right import BaseRight
 from dbt.tests.adapter.utils.test_safe_cast import BaseSafeCast
 from dbt.tests.adapter.utils.test_split_part import BaseSplitPart
 from dbt.tests.adapter.utils.test_string_literal import BaseStringLiteral
-from dbt.tests.adapter.utils.test_current_timestamp import BaseCurrentTimestampNaive
-
-from dbt.tests.util import run_dbt, check_relations_equal
+from dbt.tests.adapter.utils.test_timestamps import BaseCurrentTimestamps
+from dbt.tests.adapter.utils.test_validate_sql import BaseValidateSqlMethod
+from dbt.tests.util import check_relations_equal, run_dbt
 
 
 @pytest.mark.skip("any_value not supported by this adapter")
@@ -75,6 +81,32 @@ class TestCurrentTimestampNetezza(BaseCurrentTimestampNaive):
     pass
 
 
+class TestCurrentTimestampsNetezza(BaseCurrentTimestamps):
+    # Rename current_timestamp to current_timestamp_default
+    model_current_timestamp = """
+select {{ current_timestamp() }} as current_timestamp_default,
+       {{ current_timestamp_in_utc_backcompat() }} as current_timestamp_in_utc_backcompat,
+       {{ current_timestamp_backcompat() }} as current_timestamp_backcompat
+"""
+
+    @pytest.fixture(scope="class")
+    def expected_schema(self):
+        return {
+            "CURRENT_TIMESTAMP_DEFAULT": "TIMESTAMP",
+            "CURRENT_TIMESTAMP_IN_UTC_BACKCOMPAT": "TIMESTAMP",
+            "CURRENT_TIMESTAMP_BACKCOMPAT": "TIMESTAMP",
+        }
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"get_current_timestamp.sql": self.model_current_timestamp}
+
+    # any adapters that don't want to check can set expected schema to None
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return None
+
+
 class TestDateTruncNetezza(BaseDateTrunc):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -99,6 +131,12 @@ class TestEscapeSingleQuotesNetezza(BaseEscapeSingleQuotesQuote):
 
 class TestExceptNetezza(BaseExcept):
     pass
+
+
+class TestEqualsNetezza(BaseEquals):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"seeds": {"nullvalue": "null"}}
 
 
 class TestHashNetezza(BaseHash):
@@ -243,6 +281,14 @@ class TestListaggErrorMultiCharacterDelimiterByNetezza(BaseListagg):
             super().test_build_assert_equal(project)
 
 
+class TestMixedNullCompareNetezza(BaseMixedNullCompare):
+    pass
+
+
+class TestNullCompareNetezza(BaseNullCompare):
+    pass
+
+
 class TestPositionNetezza(BasePosition):
     pass
 
@@ -264,4 +310,8 @@ class TestSplitPartNetezza(BaseSplitPart):
 
 
 class TestStringLiteralNetezza(BaseStringLiteral):
+    pass
+
+
+class TestValidateSqlMethodNetezza(BaseValidateSqlMethod):
     pass
