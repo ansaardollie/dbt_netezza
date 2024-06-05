@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
-import sys
 import re
+import sys
 
 # require python 3.8 or newer
 if sys.version_info < (3, 8):
@@ -55,7 +55,7 @@ def _get_dbt_core_version():
 
 
 package_name = "dbt-netezza"
-package_version = "1.5.2"
+package_version = "1.5.3"
 dbt_core_version = _get_dbt_core_version()
 description = """The Netezza adapter plugin for dbt"""
 
