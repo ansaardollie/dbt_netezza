@@ -1,5 +1,5 @@
-dbt-core==1.6.9
-dbt-tests-adapter==1.6.9
+dbt-core==1.6.16
+dbt-tests-adapter==1.6.16
 
 black~=23.3
 bumpversion~=0.6.0
