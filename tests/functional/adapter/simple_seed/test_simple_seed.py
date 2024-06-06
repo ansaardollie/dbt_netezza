@@ -6,6 +6,7 @@ from dbt.tests.adapter.simple_seed.test_seed import (
     BaseTestEmptySeed,
     SeedConfigBase,
     SeedTestBase,
+    SeedUniqueDelimiterTestBase,
 )
 from dbt.tests.adapter.simple_seed.test_seed import (
     TestBasicSeedTests as BaseBasicSeedTests,
@@ -26,6 +27,15 @@ from dbt.tests.adapter.simple_seed.test_seed import (
     TestSeedSpecificFormats as BaseSeedSpecificFormats,
 )
 from dbt.tests.adapter.simple_seed.test_seed import (
+    TestSeedWithEmptyDelimiter as BaseSeedWithEmptyDelimiter,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
+    TestSeedWithUniqueDelimiter as BaseSeedWithUniqueDelimiter,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
+    TestSeedWithWrongDelimiter as BaseSeedWithWrongDelimiter,
+)
+from dbt.tests.adapter.simple_seed.test_seed import (
     TestSimpleSeedEnabledViaConfig as BaseSimpleSeedEnabledViaConfig,
 )
 from dbt.tests.adapter.simple_seed.test_seed import (
@@ -37,13 +47,13 @@ from dbt.tests.adapter.simple_seed.test_seed_type_override import (
 from dbt.tests.util import copy_file
 
 
-def _get_expected_sql():
+def _clean_sql(sql: str) -> str:
     # Replace TEXT and TIMESTAMP WITHOUT TIME ZONE types
-    expected_sql = seeds__expected_sql.replace("TEXT", "VARCHAR(2000)")
-    expected_sql = expected_sql.replace("TIMESTAMP WITHOUT TIME ZONE", "TIMESTAMP")
+    sql = sql.replace("TEXT", "VARCHAR(2000)")
+    sql = sql.replace("TIMESTAMP WITHOUT TIME ZONE", "TIMESTAMP")
 
     # Replace a single insert with multiple values with multiple insert statements
-    lines = expected_sql.split("\n")
+    lines = sql.split("\n")
     insert_index = [lines.index(line) for line in lines if line.startswith("INSERT")][0]
     insert_end = insert_index + 3
     insert_into_lines = lines[insert_index:insert_end]
@@ -52,9 +62,12 @@ def _get_expected_sql():
     for line in lines[insert_end:]:
         if line.strip():
             new_lines.extend([*insert_into_lines, line[:-1] + ";"])
-    expected_sql = "\n".join(lines[:insert_index] + new_lines)
+    sql = "\n".join(lines[:insert_index] + new_lines)
 
-    return expected_sql
+    return sql
+
+
+seeds__expected_sql_cleaned = _clean_sql(seeds__expected_sql)
 
 
 class NetezzaSeedConfigBase(SeedConfigBase):
@@ -69,7 +82,7 @@ class NetezzaSeedConfigBase(SeedConfigBase):
     @pytest.fixture(scope="class", autouse=True)
     def setUp(self, project):
         """Create table for ensuring seeds and models used in tests build correctly"""
-        project.run_sql(_get_expected_sql())
+        project.run_sql(seeds__expected_sql_cleaned)
 
 
 class NetezzaSeedTestBase(NetezzaSeedConfigBase, SeedTestBase):
@@ -104,6 +117,38 @@ class TestSeedSpecificFormatsNetezza(NetezzaSeedConfigBase, BaseSeedSpecificForm
     pass
 
 
+class NetezzaSeedUniqueDelimiterTest(SeedUniqueDelimiterTestBase):
+    @pytest.fixture(scope="class", autouse=True)
+    def setUp(self, project):
+        """Create table for ensuring seeds and models used in tests build correctly"""
+        project.run_sql(seeds__expected_sql_cleaned)
+
+    # Override to specify datetimedelim
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "seeds": {"quote_columns": False, "delimiter": "|", "datetimedelim": " "}
+        }
+
+
+class TestSeedWithEmptyDelimiterNetezza(
+    NetezzaSeedUniqueDelimiterTest, BaseSeedWithEmptyDelimiter
+):
+    pass
+
+
+class TestSeedWithUniqueDelimiterNetezza(
+    NetezzaSeedUniqueDelimiterTest, BaseSeedWithUniqueDelimiter
+):
+    pass
+
+
+class TestSeedWithWrongDelimiterNetezza(
+    NetezzaSeedUniqueDelimiterTest, BaseSeedWithWrongDelimiter
+):
+    pass
+
+
 class TestSimpleSeedEnabledViaConfigNetezza(BaseSimpleSeedEnabledViaConfig):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -114,7 +159,7 @@ class TestSimpleSeedWithBOMNetezza(NetezzaSeedConfigBase, BaseSimpleSeedWithBOM)
     @pytest.fixture(scope="class", autouse=True)
     def setUp(self, project):
         """Create table for ensuring seeds and models used in tests build correctly"""
-        project.run_sql(_get_expected_sql())
+        project.run_sql(seeds__expected_sql_cleaned)
         copy_file(
             project.test_dir,
             "seed_bom.csv",
