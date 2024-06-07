@@ -1,20 +1,27 @@
-import agate
-from dataclasses import dataclass
 import os
-from typing import Optional, List, Dict
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
-from dbt.adapters.base.meta import available
+import agate
+
 from dbt.adapters.base.impl import ConstraintSupport
+from dbt.adapters.base.meta import available
 from dbt.adapters.base.relation import BaseRelation
+from dbt.adapters.capability import (
+    Capability,
+    CapabilityDict,
+    CapabilitySupport,
+    Support,
+)
 from dbt.adapters.netezza import NetezzaConnectionManager
 from dbt.adapters.netezza.column import NetezzaColumn
 from dbt.adapters.netezza.relation import NetezzaRelation
 from dbt.adapters.protocol import AdapterConfig
-from dbt.adapters.sql.impl import SQLAdapter, LIST_RELATIONS_MACRO_NAME
+from dbt.adapters.sql.impl import LIST_RELATIONS_MACRO_NAME, SQLAdapter
 from dbt.contracts.graph.manifest import Manifest
+from dbt.contracts.graph.nodes import ConstraintType
 from dbt.exceptions import CompilationError, DbtDatabaseError
 from dbt.utils import filter_null_values
-from dbt.contracts.graph.nodes import ConstraintType
 
 
 @dataclass
@@ -35,6 +42,15 @@ class NetezzaAdapter(SQLAdapter):
         ConstraintType.primary_key: ConstraintSupport.NOT_ENFORCED,
         ConstraintType.foreign_key: ConstraintSupport.NOT_ENFORCED,
     }
+
+    _capabilities: CapabilityDict = CapabilityDict(
+        {
+            # Netezza does not have a reliable way of determining table modification time
+            Capability.TableLastModifiedMetadata: CapabilitySupport(
+                support=Support.Unsupported
+            )
+        }
+    )
 
     @classmethod
     def date_function(cls):
