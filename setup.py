@@ -70,7 +70,7 @@ setup(
     url="https://github.com/chop-analytics/dbt-netezza",
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
-    install_requires=["dbt-core~={}".format(dbt_core_version), "pyodbc~=4.0"],
+    install_requires=["dbt-core~={}".format(dbt_core_version), "pyodbc~=5.0"],
     zip_safe=False,
     classifiers=[
         "Operating System :: Microsoft :: Windows",
